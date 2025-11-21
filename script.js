@@ -15,16 +15,16 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 // --- 2. Scroll Animation (Fade In Elements) ---
 const faders = document.querySelectorAll('.fade-in, .fade-in-section, .animated-card, .animated-text, .skill-category ul li');
 const appearOptions = {
-  threshold: 0.1,
-  rootMargin: "0px 0px -50px 0px"
+    threshold: 0.1,
+    rootMargin: "0px 0px -50px 0px"
 };
 
 const appearOnScroll = new IntersectionObserver(function(entries, observer) {
-  entries.forEach(entry => {
-    if (!entry.isIntersecting) return;
-    entry.target.classList.add("visible");
-    observer.unobserve(entry.target);
-  });
+    entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("visible");
+        observer.unobserve(entry.target);
+    });
 }, appearOptions);
 
 faders.forEach(fader => appearOnScroll.observe(fader));
@@ -75,15 +75,12 @@ window.addEventListener('scroll', function() {
     }
 });
 
-// ========== GOAL TRACKER: Edit, Delete, Subgoals, Undo ========
+// ========== GOAL TRACKER: Edit, Delete, Subgoals, Undo ==========
 (() => {
-    // 🔐 CONFIG: Replace with YOUR SHA-256 hash (https://emn178.github.io/online-tools/sha256.html)
-    const HASHED_PASSWORD = "102bcf6065c621f0a55827fb0c2ee44d4acb97b1685928b25fcbe56ec17c83f4"; // ← CHANGE ME!
+    // 🔐 Your password: "reo123" → SHA-256 = 102bcf6065c621f0a55827fb0c2ee44d4acb97b1685928b25fcbe56ec17c83f4
+    const HASHED_PASSWORD = "102bcf6065c621f0a55827fb0c2ee44d4acb97b1685928b25fcbe56ec17c83f4";
 
-    // DOM
-    const progressFill = document.getElementById('progressFill');
-    const phaseText = document.getElementById('phaseText');
-    const percentText = document.getElementById('percentText');
+    // DOM Elements
     const goalList = document.getElementById('goalList');
     const unlockButton = document.getElementById('unlockButton');
     const passwordForm = document.getElementById('passwordForm');
@@ -94,8 +91,12 @@ window.addEventListener('scroll', function() {
     const allowSubgoalsCheck = document.getElementById('allowSubgoals');
     const cancelUnlock = document.getElementById('cancelUnlock');
     const lockButton = document.getElementById('lockButton');
+    const adminPanel = document.getElementById('adminPanel');
 
-    if (!unlockButton) return;
+    if (!unlockButton || !adminPanel) return;
+
+    // Hide admin panel on load
+    adminPanel.classList.add('hidden');
 
     // State
     let goals = JSON.parse(localStorage.getItem('motakeGoals')) || [
@@ -122,8 +123,8 @@ window.addEventListener('scroll', function() {
     ];
 
     let isUnlocked = false;
-    let deletedGoal = null; // For undo
-    let deletedSubgoal = null; // For undo
+    let deletedGoal = null;
+    let deletedSubgoal = null;
 
     // SHA-256
     async function sha256(message) {
@@ -138,7 +139,7 @@ window.addEventListener('scroll', function() {
         updateProgress();
     }
 
-    // Progress calc (main + subgoals)
+    // Progress calc
     function calculateProgress() {
         let total = 0, completed = 0;
         goals.forEach(g => {
@@ -148,15 +149,20 @@ window.addEventListener('scroll', function() {
         return { percent: total ? Math.round((completed / total) * 100) : 0, completed, total };
     }
 
+    // Update UI
     function updateProgress() {
         const { percent, completed, total } = calculateProgress();
-        progressFill.style.width = `${percent}%`;
-        percentText.textContent = `${percent}%`;
-        phaseText.textContent = completed === total ? "🎉 All done!" : `${completed} of ${total} tasks`;
+
+        // ✅ Use new progress elements
+        document.getElementById('progressBar')?.style.width = `${percent}%`;
+        document.getElementById('completedTasks')?.textContent = completed;
+        document.getElementById('totalTasks')?.textContent = total;
+        document.getElementById('progressPercent')?.textContent = `${percent}%`;
+
         renderGoals();
     }
 
-    // ===== UI Helpers (exposed globally) =====
+    // UI Helpers (exposed globally)
     window.toggleSubgoals = (goalId) => {
         const el = document.getElementById(`subgoals-${goalId}`);
         if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
@@ -167,7 +173,10 @@ window.addEventListener('scroll', function() {
     };
     window.hideSubgoalInput = (goalId) => {
         const el = document.getElementById(`subgoal-input-${goalId}`);
-        if (el) { el.classList.remove('visible'); el.querySelector('.subgoal-input').value = ''; }
+        if (el) {
+            el.classList.remove('visible');
+            el.querySelector('.subgoal-input').value = '';
+        }
     };
 
     window.addSubgoal = (goalId) => {
@@ -184,8 +193,8 @@ window.addEventListener('scroll', function() {
         }
     };
 
-    // ===== Edit/Delete Logic =====
-    function showToast(message, onUndo) {
+    // Undo system
+    function showToast(message) {
         let toast = document.getElementById('undoToast');
         if (!toast) {
             toast = document.createElement('div');
@@ -210,9 +219,11 @@ window.addEventListener('scroll', function() {
             deletedSubgoal = null;
         }
         saveGoals();
-        document.getElementById('undoToast')?.remove();
+        const toast = document.getElementById('undoToast');
+        if (toast) toast.remove();
     };
 
+    // Edit/Delete
     window.editGoal = (goalId) => {
         const goal = goals.find(g => g.id == goalId);
         if (!goal || !isUnlocked) return;
@@ -223,7 +234,6 @@ window.addEventListener('scroll', function() {
         const textSpan = goalEl.querySelector('.goal-text');
         const controls = goalEl.querySelector('.goal-controls');
 
-        // Hide text & controls, show form
         textSpan.style.display = 'none';
         controls.style.display = 'none';
 
@@ -248,17 +258,18 @@ window.addEventListener('scroll', function() {
                 goal.text = newText;
                 saveGoals();
             }
-            cleanup();
-        };
-
-        form.querySelector('.cancel-btn').onclick = cleanup;
-
-        function cleanup() {
             form.remove();
             textSpan.style.display = 'block';
             controls.style.display = 'flex';
             textSpan.textContent = goal.text;
-        }
+        };
+
+        form.querySelector('.cancel-btn').onclick = () => {
+            form.remove();
+            textSpan.style.display = 'block';
+            controls.style.display = 'flex';
+            textSpan.textContent = goal.text;
+        };
     };
 
     window.deleteGoal = (goalId) => {
@@ -268,7 +279,7 @@ window.addEventListener('scroll', function() {
             deletedGoal = { goal: goals[index], index };
             goals.splice(index, 1);
             saveGoals();
-            showToast("Goal deleted.", undoDelete);
+            showToast("Goal deleted.");
         }
     };
 
@@ -307,17 +318,18 @@ window.addEventListener('scroll', function() {
                 sub.text = newText;
                 saveGoals();
             }
-            cleanup();
-        };
-
-        form.querySelector('.cancel-btn').onclick = cleanup;
-
-        function cleanup() {
             form.remove();
             textSpan.style.display = 'block';
             controls.style.display = 'flex';
             textSpan.textContent = sub.text;
-        }
+        };
+
+        form.querySelector('.cancel-btn').onclick = () => {
+            form.remove();
+            textSpan.style.display = 'block';
+            controls.style.display = 'flex';
+            textSpan.textContent = sub.text;
+        };
     };
 
     window.deleteSubgoal = (goalId, subId) => {
@@ -329,11 +341,11 @@ window.addEventListener('scroll', function() {
             deletedSubgoal = { subgoal: goal.subgoals[index], goalId, index };
             goal.subgoals.splice(index, 1);
             saveGoals();
-            showToast("Subgoal deleted.", undoDelete);
+            showToast("Subgoal deleted.");
         }
     };
 
-    // Drag & Drop for subgoals
+    // Drag & Drop
     function makeSubgoalsSortable(goalId) {
         const container = document.getElementById(`subgoals-${goalId}`);
         if (!container) return;
@@ -354,11 +366,10 @@ window.addEventListener('scroll', function() {
             item.addEventListener('dragover', e => {
                 e.preventDefault();
                 const afterElement = getDragAfterElement(container, e.clientY);
-                const currentItem = document.querySelector(`[data-sub-id="${item.dataset.subId}"]`);
                 if (afterElement == null) {
-                    container.appendChild(currentItem);
+                    container.appendChild(item);
                 } else {
-                    container.insertBefore(currentItem, afterElement);
+                    container.insertBefore(item, afterElement);
                 }
                 item.classList.add('over');
             });
@@ -366,10 +377,19 @@ window.addEventListener('scroll', function() {
             item.addEventListener('dragleave', () => item.classList.remove('over'));
             item.addEventListener('drop', () => {
                 item.classList.remove('over');
-                if (!draggedItem) return;
-                const fromId = draggedItem.dataset.subId;
-                const toId = item.dataset.subId;
-                reorderSubgoals(goalId, fromId, toId);
+                if (draggedItem && draggedItem !== item) {
+                    const fromIndex = Array.from(container.children).indexOf(draggedItem);
+                    const toIndex = Array.from(container.children).indexOf(item);
+                    if (fromIndex !== -1 && toIndex !== -1) {
+                        const goal = goals.find(g => g.id == goalId);
+                        if (goal) {
+                            const [moved] = goal.subgoals.splice(fromIndex, 1);
+                            goal.subgoals.splice(toIndex, 0, moved);
+                            saveGoals();
+                        }
+                    }
+                }
+                draggedItem = null;
             });
         });
     }
@@ -387,20 +407,10 @@ window.addEventListener('scroll', function() {
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
-    function reorderSubgoals(goalId, fromId, toId) {
-        const goal = goals.find(g => g.id == goalId);
-        if (!goal) return;
-        const fromIndex = goal.subgoals.findIndex(s => s.id == fromId);
-        const toIndex = goal.subgoals.findIndex(s => s.id == toId);
-        if (fromIndex === -1 || toIndex === -1) return;
-
-        const [moved] = goal.subgoals.splice(fromIndex, 1);
-        goal.subgoals.splice(toIndex, 0, moved);
-        saveGoals();
-    }
-
-    // ===== Render =====
+    // Render
     function renderGoals() {
+        if (!goalList) return;
+
         goalList.innerHTML = '';
 
         goals.forEach(goal => {
@@ -428,11 +438,10 @@ window.addEventListener('scroll', function() {
                     ` : ''}
                 </div>
                 ${isMain && goal.allowSubgoals ? `
-                    <div id="subgoals-${goal.id}" class="subgoals" style="display: block;">
+                    <div id="subgoals-${goal.id}" class="subgoals">
                         ${goal.subgoals.map(sub => `
                             <div class="subgoal-item ${sub.completed ? 'completed' : ''}" 
-                                 data-sub-id="${sub.id}" 
-                                 draggable="${isUnlocked}">
+                                 data-sub-id="${sub.id}" draggable="${isUnlocked}">
                                 <input type="checkbox" class="subgoal-checkbox" 
                                        data-parent="${goal.id}" data-id="${sub.id}" 
                                        ${sub.completed ? 'checked' : ''} ${isUnlocked ? '' : 'disabled'}>
@@ -469,34 +478,13 @@ window.addEventListener('scroll', function() {
 
             goalList.appendChild(goalEl);
 
-            // Event listeners (if unlocked)
-            if (isUnlocked) {
-                goalEl.querySelector('.goal-checkbox')?.addEventListener('change', e => {
-                    const g = goals.find(g => g.id == e.target.dataset.id);
-                    if (g) { g.completed = e.target.checked; saveGoals(); }
-                });
-
-                goalEl.querySelectorAll('.subgoal-checkbox').forEach(cb => {
-                    cb.addEventListener('change', e => {
-                        const parentId = e.target.dataset.parent;
-                        const subId = e.target.dataset.id;
-                        const g = goals.find(g => g.id == parentId);
-                        if (g) {
-                            const sub = g.subgoals.find(s => s.id == subId);
-                            if (sub) { sub.completed = e.target.checked; saveGoals(); }
-                        }
-                    });
-                });
-
-                // Enable drag & drop
-                if (isMain && goal.allowSubgoals && goal.subgoals.length > 1) {
-                    setTimeout(() => makeSubgoalsSortable(goal.id), 100);
-                }
+            if (isUnlocked && isMain && goal.allowSubgoals && goal.subgoals.length > 1) {
+                setTimeout(() => makeSubgoalsSortable(goal.id), 100);
             }
         });
     }
 
-    // ===== Admin Unlock =====
+    // Admin Control
     function showPasswordForm() {
         passwordForm.classList.remove('hidden');
         unlockButton.style.display = 'none';
@@ -506,6 +494,7 @@ window.addEventListener('scroll', function() {
         isUnlocked = true;
         passwordForm.classList.add('hidden');
         addGoalForm.classList.remove('hidden');
+        adminPanel.classList.remove('hidden'); // ✅ Show admin panel
         renderGoals();
     }
 
@@ -513,9 +502,11 @@ window.addEventListener('scroll', function() {
         isUnlocked = false;
         addGoalForm.classList.add('hidden');
         unlockButton.style.display = 'inline-block';
+        adminPanel.classList.add('hidden'); // ✅ Hide admin panel
         renderGoals();
     }
 
+    // Event Listeners
     unlockButton.addEventListener('click', showPasswordForm);
     cancelUnlock.addEventListener('click', () => {
         passwordForm.classList.add('hidden');
@@ -534,10 +525,13 @@ window.addEventListener('scroll', function() {
         try {
             const hash = await sha256(input);
             if (hash === HASHED_PASSWORD) {
-                showGoalForm();
+                showGoalForm(); // ✅ This now shows adminPanel
                 passwordInput.value = '';
                 document.querySelectorAll('.password-error').forEach(el => el.remove());
+                // Optional: focus first input
+                goalInput.focus();
             } else {
+                // Show error
                 let error = document.querySelector('.password-error');
                 if (!error) {
                     error = document.createElement('p');
@@ -549,7 +543,8 @@ window.addEventListener('scroll', function() {
                 passwordInput.focus();
             }
         } catch (err) {
-            console.error(err);
+            console.error("Hashing failed:", err);
+            alert("Password verification failed. Check console for details.");
         }
     });
 
@@ -570,7 +565,6 @@ window.addEventListener('scroll', function() {
             });
             saveGoals();
             goalInput.value = '';
-            goalInput.focus();
         }
     });
 
