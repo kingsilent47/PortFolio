@@ -5,7 +5,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         const targetId = this.getAttribute('href');
         const targetElement = document.querySelector(targetId);
         if (targetElement) {
-            const headerHeight = document.querySelector('header').offsetHeight;
+            const headerHeight = document.querySelector('header')?.offsetHeight || 0;
             const targetPosition = targetElement.offsetTop - headerHeight;
             window.scrollTo({ top: targetPosition, behavior: 'smooth' });
         }
@@ -68,19 +68,20 @@ if (skillsSection) {
 // --- 5. Header Animation on Scroll ---
 window.addEventListener('scroll', function() {
     const header = document.querySelector('header');
-    if (window.scrollY > 50) {
-        header.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
-    } else {
-        header.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+    if (header) {
+        if (window.scrollY > 50) {
+            header.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
+        } else {
+            header.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+        }
     }
 });
 
-// ========== GOAL TRACKER: Edit, Delete, Subgoals, Undo ==========
+// ========== GOAL TRACKER (SIMPLIFIED, NO DRAG-DROP) ==========
 (() => {
-    // 🔐 Your password: "reo123" → SHA-256 = 102bcf6065c621f0a55827fb0c2ee44d4acb97b1685928b25fcbe56ec17c83f4
+    // 🔐 Password: "reo123"
     const HASHED_PASSWORD = "102bcf6065c621f0a55827fb0c2ee44d4acb97b1685928b25fcbe56ec17c83f4";
 
-    // DOM Elements
     const goalList = document.getElementById('goalList');
     const unlockButton = document.getElementById('unlockButton');
     const passwordForm = document.getElementById('passwordForm');
@@ -93,12 +94,10 @@ window.addEventListener('scroll', function() {
     const lockButton = document.getElementById('lockButton');
     const adminPanel = document.getElementById('adminPanel');
 
-    if (!unlockButton || !adminPanel) return;
+    if (!unlockButton || !adminPanel || !goalList) return;
 
-    // Hide admin panel on load
     adminPanel.classList.add('hidden');
 
-    // State
     let goals = JSON.parse(localStorage.getItem('motakeGoals')) || [
         {
             id: 'g1',
@@ -126,34 +125,33 @@ window.addEventListener('scroll', function() {
     let deletedGoal = null;
     let deletedSubgoal = null;
 
-    // SHA-256
     async function sha256(message) {
         const msgBuffer = new TextEncoder().encode(message);
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
         return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // Save
     function saveGoals() {
-        localStorage.setItem('motakeGoals', JSON.stringify(goals));
-        updateProgress();
+        try {
+            localStorage.setItem('motakeGoals', JSON.stringify(goals));
+            updateProgress();
+        } catch (e) {
+            console.error("Failed to save:", e);
+        }
     }
 
-    // Progress calc
     function calculateProgress() {
         let total = 0, completed = 0;
         goals.forEach(g => {
-            total += 1; if (g.completed) completed += 1;
-            g.subgoals.forEach(s => { total += 1; if (s.completed) completed += 1; });
+            total++; if (g.completed) completed++;
+            g.subgoals.forEach(s => { total++; if (s.completed) completed++; });
         });
         return { percent: total ? Math.round((completed / total) * 100) : 0, completed, total };
     }
 
-    // Update UI
     function updateProgress() {
         const { percent, completed, total } = calculateProgress();
 
-        // ✅ Use new progress elements
         document.getElementById('progressBar')?.style.width = `${percent}%`;
         document.getElementById('completedTasks')?.textContent = completed;
         document.getElementById('totalTasks')?.textContent = total;
@@ -162,7 +160,7 @@ window.addEventListener('scroll', function() {
         renderGoals();
     }
 
-    // UI Helpers (exposed globally)
+    // UI Helpers
     window.toggleSubgoals = (goalId) => {
         const el = document.getElementById(`subgoals-${goalId}`);
         if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
@@ -181,11 +179,11 @@ window.addEventListener('scroll', function() {
 
     window.addSubgoal = (goalId) => {
         const input = document.querySelector(`#subgoal-input-${goalId} .subgoal-input`);
-        const text = input.value.trim();
+        const text = input?.value.trim();
         if (text) {
             const goal = goals.find(g => g.id == goalId);
             if (goal) {
-                goal.subgoals.push({ id: `sg_${Date.now()}`, text, completed: false });
+                goal.subgoals.push({ id: Date.now().toString(), text, completed: false });
                 saveGoals();
                 input.value = '';
                 hideSubgoalInput(goalId);
@@ -193,7 +191,6 @@ window.addEventListener('scroll', function() {
         }
     };
 
-    // Undo system
     function showToast(message) {
         let toast = document.getElementById('undoToast');
         if (!toast) {
@@ -204,7 +201,9 @@ window.addEventListener('scroll', function() {
         }
         toast.innerHTML = `${message} <button onclick="undoDelete()">↩ Undo</button>`;
         toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 5000);
+        setTimeout(() => {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 5000);
     }
 
     window.undoDelete = () => {
@@ -219,11 +218,8 @@ window.addEventListener('scroll', function() {
             deletedSubgoal = null;
         }
         saveGoals();
-        const toast = document.getElementById('undoToast');
-        if (toast) toast.remove();
     };
 
-    // Edit/Delete
     window.editGoal = (goalId) => {
         const goal = goals.find(g => g.id == goalId);
         if (!goal || !isUnlocked) return;
@@ -233,6 +229,7 @@ window.addEventListener('scroll', function() {
 
         const textSpan = goalEl.querySelector('.goal-text');
         const controls = goalEl.querySelector('.goal-controls');
+        if (!textSpan || !controls) return;
 
         textSpan.style.display = 'none';
         controls.style.display = 'none';
@@ -252,24 +249,23 @@ window.addEventListener('scroll', function() {
         input.focus();
         input.selectionStart = input.selectionEnd = input.value.length;
 
-        form.querySelector('.save-btn').onclick = () => {
-            const newText = input.value.trim();
-            if (newText) {
-                goal.text = newText;
-                saveGoals();
-            }
+        const cleanup = () => {
             form.remove();
             textSpan.style.display = 'block';
             controls.style.display = 'flex';
             textSpan.textContent = goal.text;
         };
 
-        form.querySelector('.cancel-btn').onclick = () => {
-            form.remove();
-            textSpan.style.display = 'block';
-            controls.style.display = 'flex';
-            textSpan.textContent = goal.text;
+        form.querySelector('.save-btn').onclick = () => {
+            const newText = input.value.trim();
+            if (newText) {
+                goal.text = newText;
+                saveGoals();
+            }
+            cleanup();
         };
+
+        form.querySelector('.cancel-btn').onclick = cleanup;
     };
 
     window.deleteGoal = (goalId) => {
@@ -293,6 +289,7 @@ window.addEventListener('scroll', function() {
 
         const textSpan = subEl.querySelector('.subgoal-text');
         const controls = subEl.querySelector('.subgoal-controls');
+        if (!textSpan || !controls) return;
 
         textSpan.style.display = 'none';
         controls.style.display = 'none';
@@ -312,24 +309,23 @@ window.addEventListener('scroll', function() {
         input.focus();
         input.selectionStart = input.selectionEnd = input.value.length;
 
-        form.querySelector('.save-btn').onclick = () => {
-            const newText = input.value.trim();
-            if (newText) {
-                sub.text = newText;
-                saveGoals();
-            }
+        const cleanup = () => {
             form.remove();
             textSpan.style.display = 'block';
             controls.style.display = 'flex';
             textSpan.textContent = sub.text;
         };
 
-        form.querySelector('.cancel-btn').onclick = () => {
-            form.remove();
-            textSpan.style.display = 'block';
-            controls.style.display = 'flex';
-            textSpan.textContent = sub.text;
+        form.querySelector('.save-btn').onclick = () => {
+            const newText = input.value.trim();
+            if (newText) {
+                sub.text = newText;
+                saveGoals();
+            }
+            cleanup();
         };
+
+        form.querySelector('.cancel-btn').onclick = cleanup;
     };
 
     window.deleteSubgoal = (goalId, subId) => {
@@ -345,72 +341,8 @@ window.addEventListener('scroll', function() {
         }
     };
 
-    // Drag & Drop
-    function makeSubgoalsSortable(goalId) {
-        const container = document.getElementById(`subgoals-${goalId}`);
-        if (!container) return;
-
-        let draggedItem = null;
-
-        container.querySelectorAll('.subgoal-item').forEach(item => {
-            item.setAttribute('draggable', 'true');
-            item.addEventListener('dragstart', () => {
-                draggedItem = item;
-                setTimeout(() => item.classList.add('dragging'), 0);
-            });
-            item.addEventListener('dragend', () => {
-                draggedItem = null;
-                item.classList.remove('dragging');
-            });
-
-            item.addEventListener('dragover', e => {
-                e.preventDefault();
-                const afterElement = getDragAfterElement(container, e.clientY);
-                if (afterElement == null) {
-                    container.appendChild(item);
-                } else {
-                    container.insertBefore(item, afterElement);
-                }
-                item.classList.add('over');
-            });
-
-            item.addEventListener('dragleave', () => item.classList.remove('over'));
-            item.addEventListener('drop', () => {
-                item.classList.remove('over');
-                if (draggedItem && draggedItem !== item) {
-                    const fromIndex = Array.from(container.children).indexOf(draggedItem);
-                    const toIndex = Array.from(container.children).indexOf(item);
-                    if (fromIndex !== -1 && toIndex !== -1) {
-                        const goal = goals.find(g => g.id == goalId);
-                        if (goal) {
-                            const [moved] = goal.subgoals.splice(fromIndex, 1);
-                            goal.subgoals.splice(toIndex, 0, moved);
-                            saveGoals();
-                        }
-                    }
-                }
-                draggedItem = null;
-            });
-        });
-    }
-
-    function getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('.subgoal-item:not(.dragging)')];
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) {
-                return { offset, element: child };
-            } else {
-                return closest;
-            }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
     // Render
     function renderGoals() {
-        if (!goalList) return;
-
         goalList.innerHTML = '';
 
         goals.forEach(goal => {
@@ -420,9 +352,48 @@ window.addEventListener('scroll', function() {
             const goalEl = document.createElement('div');
             goalEl.className = `goal-item ${isMain ? 'main' : ''} ${goal.completed ? 'completed' : ''}`;
             goalEl.dataset.goalId = goal.id;
+
+            const subgoalsHtml = isMain && goal.allowSubgoals ? `
+                <div id="subgoals-${goal.id}" class="subgoals">
+                    ${goal.subgoals.map(sub => `
+                        <div class="subgoal-item ${sub.completed ? 'completed' : ''}" data-sub-id="${sub.id}">
+                            <input type="checkbox" class="subgoal-checkbox" 
+                                   data-parent="${goal.id}" data-id="${sub.id}" 
+                                   ${sub.completed ? 'checked' : ''} ${isUnlocked ? '' : 'disabled'}>
+                            <span class="subgoal-text">${sub.text}</span>
+                            ${isUnlocked ? `
+                                <div class="subgoal-controls">
+                                    <button class="subgoal-action-btn" title="Edit" 
+                                            onclick="editSubgoal('${goal.id}', '${sub.id}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="subgoal-action-btn" title="Delete" 
+                                            onclick="deleteSubgoal('${goal.id}', '${sub.id}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                    ${isUnlocked ? `
+                        <button class="add-subgoal-btn" onclick="showSubgoalInput('${goal.id}')">
+                            <i class="fas fa-plus"></i> Add Subgoal
+                        </button>
+                        <div id="subgoal-input-${goal.id}" class="subgoal-input-form">
+                            <input type="text" class="subgoal-input" placeholder="e.g., Read chapter 3">
+                            <div class="subgoal-input-btns">
+                                <button type="button" onclick="addSubgoal('${goal.id}')">Add</button>
+                                <button type="button" onclick="hideSubgoalInput('${goal.id}')">Cancel</button>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            ` : '';
+
             goalEl.innerHTML = `
                 <div class="goal-header">
-                    <input type="checkbox" class="goal-checkbox" data-id="${goal.id}" ${goal.completed ? 'checked' : ''} ${isUnlocked ? '' : 'disabled'}>
+                    <input type="checkbox" class="goal-checkbox" data-id="${goal.id}" 
+                           ${goal.completed ? 'checked' : ''} ${isUnlocked ? '' : 'disabled'}>
                     <span class="goal-text">${goal.text}</span>
                     ${isMain && goal.allowSubgoals && hasSubgoals ? 
                         `<button class="toggle-subgoals" onclick="toggleSubgoals('${goal.id}')">➖</button>` : ''}
@@ -437,50 +408,10 @@ window.addEventListener('scroll', function() {
                         </div>
                     ` : ''}
                 </div>
-                ${isMain && goal.allowSubgoals ? `
-                    <div id="subgoals-${goal.id}" class="subgoals">
-                        ${goal.subgoals.map(sub => `
-                            <div class="subgoal-item ${sub.completed ? 'completed' : ''}" 
-                                 data-sub-id="${sub.id}" draggable="${isUnlocked}">
-                                <input type="checkbox" class="subgoal-checkbox" 
-                                       data-parent="${goal.id}" data-id="${sub.id}" 
-                                       ${sub.completed ? 'checked' : ''} ${isUnlocked ? '' : 'disabled'}>
-                                <span class="subgoal-text">${sub.text}</span>
-                                ${isUnlocked ? `
-                                    <div class="subgoal-controls">
-                                        <button class="subgoal-action-btn" title="Edit" 
-                                                onclick="editSubgoal('${goal.id}', '${sub.id}')">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="subgoal-action-btn" title="Delete" 
-                                                onclick="deleteSubgoal('${goal.id}', '${sub.id}')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        `).join('')}
-                        ${isUnlocked ? `
-                            <button class="add-subgoal-btn" onclick="showSubgoalInput('${goal.id}')">
-                                <i class="fas fa-plus"></i> Add Subgoal
-                            </button>
-                            <div id="subgoal-input-${goal.id}" class="subgoal-input-form">
-                                <input type="text" class="subgoal-input" placeholder="e.g., Read chapter 3">
-                                <div class="subgoal-input-btns">
-                                    <button type="button" onclick="addSubgoal('${goal.id}')">Add</button>
-                                    <button type="button" onclick="hideSubgoalInput('${goal.id}')">Cancel</button>
-                                </div>
-                            </div>
-                        ` : ''}
-                    </div>
-                ` : ''}
+                ${subgoalsHtml}
             `;
 
             goalList.appendChild(goalEl);
-
-            if (isUnlocked && isMain && goal.allowSubgoals && goal.subgoals.length > 1) {
-                setTimeout(() => makeSubgoalsSortable(goal.id), 100);
-            }
         });
     }
 
@@ -494,7 +425,7 @@ window.addEventListener('scroll', function() {
         isUnlocked = true;
         passwordForm.classList.add('hidden');
         addGoalForm.classList.remove('hidden');
-        adminPanel.classList.remove('hidden'); // ✅ Show admin panel
+        adminPanel.classList.remove('hidden');
         renderGoals();
     }
 
@@ -502,36 +433,31 @@ window.addEventListener('scroll', function() {
         isUnlocked = false;
         addGoalForm.classList.add('hidden');
         unlockButton.style.display = 'inline-block';
-        adminPanel.classList.add('hidden'); // ✅ Hide admin panel
+        adminPanel.classList.add('hidden');
         renderGoals();
     }
 
-    // Event Listeners
     unlockButton.addEventListener('click', showPasswordForm);
-    cancelUnlock.addEventListener('click', () => {
+    cancelUnlock?.addEventListener('click', () => {
         passwordForm.classList.add('hidden');
         unlockButton.style.display = 'inline-block';
         passwordInput.value = '';
         document.querySelectorAll('.password-error').forEach(el => el.remove());
     });
+    lockButton?.addEventListener('click', lockEditor);
 
-    lockButton.addEventListener('click', lockEditor);
-
-    passwordForm.addEventListener('submit', async (e) => {
+    passwordForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const input = passwordInput.value.trim();
+        const input = passwordInput?.value.trim();
         if (!input) return;
 
         try {
             const hash = await sha256(input);
             if (hash === HASHED_PASSWORD) {
-                showGoalForm(); // ✅ This now shows adminPanel
+                showGoalForm();
                 passwordInput.value = '';
                 document.querySelectorAll('.password-error').forEach(el => el.remove());
-                // Optional: focus first input
-                goalInput.focus();
             } else {
-                // Show error
                 let error = document.querySelector('.password-error');
                 if (!error) {
                     error = document.createElement('p');
@@ -544,19 +470,18 @@ window.addEventListener('scroll', function() {
             }
         } catch (err) {
             console.error("Hashing failed:", err);
-            alert("Password verification failed. Check console for details.");
         }
     });
 
-    addGoalForm.addEventListener('submit', (e) => {
+    addGoalForm?.addEventListener('submit', (e) => {
         e.preventDefault();
-        const text = goalInput.value.trim();
-        const isMain = isMainGoalCheck.checked;
-        const allowSub = allowSubgoalsCheck.checked && isMain;
+        const text = goalInput?.value.trim();
+        const isMain = isMainGoalCheck?.checked || false;
+        const allowSub = allowSubgoalsCheck?.checked && isMain;
 
         if (text) {
             goals.push({
-                id: `g_${Date.now()}`,
+                id: Date.now().toString(),
                 text,
                 completed: false,
                 isMain,
