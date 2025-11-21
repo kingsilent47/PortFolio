@@ -497,7 +497,7 @@ footer p {
     background: linear-gradient(135deg, #ffffff 70%, #e8eaf6 100%);
 }
 
-/* ===== GOAL PROGRESS BAR STYLES ===== */
+/* ===== GOAL PROGRESS BAR (Enhanced w/ Subgoals) ===== */
 .progress-track {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(8px);
@@ -506,7 +506,7 @@ footer p {
     border-radius: 12px;
     padding: 20px;
     margin: 30px auto;
-    max-width: 700px;
+    max-width: 800px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
 }
 
@@ -558,85 +558,117 @@ footer p {
     color: #1b5e20;
 }
 
-/* Goal Controls */
-.goal-controls {
-    margin: 30px 0;
-    text-align: center;
+/* Admin Controls */
+.admin-note {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 10px 0;
 }
 
-.goal-controls h3 {
-    margin-bottom: 15px;
-    color: #2e7d32;
+.btn-admin, .password-form button, .add-goal-form button {
+    background: #2e7d32;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+.btn-admin:hover, .password-form button:hover, .add-goal-form button:hover {
+    background: #1b5e20;
+    transform: translateY(-2px);
 }
 
-#addGoalForm {
+.password-form.hidden, .add-goal-form.hidden {
+    display: none;
+}
+
+.password-form, .add-goal-form {
     display: flex;
-    gap: 10px;
-    justify-content: center;
     flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-top: 15px;
+    justify-content: center;
 }
 
-#goalInput {
+#passwordInput, #goalInput {
     padding: 10px 15px;
     border: 2px solid #a5d6a7;
     border-radius: 8px;
     font-size: 1rem;
-    width: 250px;
     outline: none;
     transition: border-color 0.3s;
+    min-width: 220px;
 }
-
-#goalInput:focus {
+#passwordInput:focus, #goalInput:focus {
     border-color: #4caf50;
     box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
 }
 
-#addGoalForm button {
-    padding: 10px 20px;
-    background: #2e7d32;
-    color: white;
-    border: none;
-    border-radius: 8px;
+.form-options {
+    display: flex;
+    gap: 15px;
+    margin: 10px 0;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.form-options label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.95rem;
+    color: #444;
+}
+.form-options input[type="checkbox"] {
     cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s;
 }
 
-#addGoalForm button:hover {
-    background: #1b5e20;
-    transform: translateY(-2px);
+.password-error {
+    color: #d32f2f;
+    font-size: 0.9rem;
+    margin-top: 8px;
+    text-align: center;
+    font-weight: 500;
+    grid-column: 1 / -1;
 }
 
 /* Goal List */
 .goal-list {
     margin-top: 25px;
+    max-width: 800px;
 }
 
 .goal-item {
-    display: flex;
-    align-items: center;
-    padding: 14px 20px;
-    margin-bottom: 12px;
     background: #f8faf8;
-    border-radius: 8px;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
     border-left: 4px solid #a5d6a7;
     transition: all 0.3s ease;
-    animation: fadeIn 0.4s ease forwards;
+    position: relative;
+}
+
+.goal-item.main {
+    background: #f1f8e9;
+    border-left-color: #4caf50;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
 .goal-item.completed {
+    opacity: 0.85;
     background: #e8f5e9;
-    border-left-color: #4caf50;
-    opacity: 0.9;
 }
 
-.goal-item.completed .goal-text {
-    text-decoration: line-through;
-    color: #666;
+.goal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .goal-checkbox {
-    margin-right: 15px;
     width: 20px;
     height: 20px;
     cursor: pointer;
@@ -644,11 +676,100 @@ footer p {
 
 .goal-text {
     flex: 1;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     color: #212529;
+    font-weight: 500;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+/* Subgoal toggle button */
+.toggle-subgoals {
+    background: none;
+    border: none;
+    color: #4caf50;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 4px;
+    border-radius: 4px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+.toggle-subgoals:hover {
+    opacity: 1;
+    background: rgba(76, 175, 80, 0.1);
+}
+
+/* Subgoals container */
+.subgoals {
+    margin-top: 12px;
+    padding-left: 36px;
+}
+.subgoal-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #fff;
+    border-radius: 6px;
+    border-left: 2px solid #81c784;
+}
+.subgoal-item.completed {
+    background: #f1f8e9;
+}
+
+.subgoal-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.subgoal-text {
+    flex: 1;
+    font-size: 1rem;
+    color: #444;
+}
+.subgoal-item.completed .subgoal-text {
+    text-decoration: line-through;
+    color: #777;
+}
+
+/* Add Subgoal Button (Admin) */
+.add-subgoal-btn {
+    margin-top: 10px;
+    background: rgba(46, 125, 50, 0.1);
+    color: #2e7d32;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.add-subgoal-btn:hover {
+    background: rgba(46, 125, 50, 0.2);
+}
+
+/* Subgoal Input (hidden by default) */
+.subgoal-input-form {
+    display: none;
+    margin-top: 8px;
+    padding-left: 36px;
+}
+.subgoal-input-form.visible {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.subgoal-input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #a5d6a7;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+.subgoal-input-btns button {
+    padding: 6px 10px;
+    font-size: 0.9rem;
 }
