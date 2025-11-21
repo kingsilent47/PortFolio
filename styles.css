@@ -497,279 +497,120 @@ footer p {
     background: linear-gradient(135deg, #ffffff 70%, #e8eaf6 100%);
 }
 
-/* ===== GOAL PROGRESS BAR (Enhanced w/ Subgoals) ===== */
-.progress-track {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(46, 125, 50, 0.2);
-    border-radius: 12px;
-    padding: 20px;
-    margin: 30px auto;
-    max-width: 800px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
-}
+/* ===== GOAL SYSTEM (Edit/Delete + Subgoals) ===== */
 
-.progress-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85rem;
-    color: #555;
-    margin-bottom: 12px;
-    font-weight: 500;
-}
+/* ... (keep all your existing .progress-track, .progress-container, etc.) ... */
 
-.progress-container {
-    position: relative;
-    height: 14px;
-    width: 100%;
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 7px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #2e7d32, #4caf50, #81c784);
-    border-radius: 7px;
-    transition: width 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
-    position: relative;
-    z-index: 2;
-}
-
-.progress-glow {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-    border-radius: 7px;
-    box-shadow: inset 0 0 10px rgba(46, 125, 50, 0.4);
-    pointer-events: none;
-    z-index: 1;
-}
-
-.progress-info {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 12px;
-    font-weight: 600;
-    color: #1b5e20;
-}
-
-/* Admin Controls */
-.admin-note {
-    font-size: 0.9rem;
-    color: #666;
-    margin: 10px 0;
-}
-
-.btn-admin, .password-form button, .add-goal-form button {
-    background: #2e7d32;
-    color: white;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s;
-}
-.btn-admin:hover, .password-form button:hover, .add-goal-form button:hover {
-    background: #1b5e20;
-    transform: translateY(-2px);
-}
-
-.password-form.hidden, .add-goal-form.hidden {
-    display: none;
-}
-
-.password-form, .add-goal-form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    margin-top: 15px;
-    justify-content: center;
-}
-
-#passwordInput, #goalInput {
-    padding: 10px 15px;
-    border: 2px solid #a5d6a7;
-    border-radius: 8px;
-    font-size: 1rem;
-    outline: none;
-    transition: border-color 0.3s;
-    min-width: 220px;
-}
-#passwordInput:focus, #goalInput:focus {
-    border-color: #4caf50;
-    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
-}
-
-.form-options {
-    display: flex;
-    gap: 15px;
-    margin: 10px 0;
-    width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-.form-options label {
+/* Goal Item Controls */
+.goal-controls {
     display: flex;
     align-items: center;
-    gap: 5px;
-    font-size: 0.95rem;
-    color: #444;
-}
-.form-options input[type="checkbox"] {
-    cursor: pointer;
+    gap: 8px;
+    margin-left: auto;
 }
 
-.password-error {
-    color: #d32f2f;
-    font-size: 0.9rem;
-    margin-top: 8px;
-    text-align: center;
-    font-weight: 500;
-    grid-column: 1 / -1;
-}
-
-/* Goal List */
-.goal-list {
-    margin-top: 25px;
-    max-width: 800px;
-}
-
-.goal-item {
-    background: #f8faf8;
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 16px;
-    border-left: 4px solid #a5d6a7;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.goal-item.main {
-    background: #f1f8e9;
-    border-left-color: #4caf50;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-.goal-item.completed {
-    opacity: 0.85;
-    background: #e8f5e9;
-}
-
-.goal-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.goal-checkbox {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-}
-
-.goal-text {
-    flex: 1;
-    font-size: 1.1rem;
-    color: #212529;
-    font-weight: 500;
-}
-
-/* Subgoal toggle button */
-.toggle-subgoals {
+.goal-action-btn {
     background: none;
     border: none;
-    color: #4caf50;
+    color: #666;
     cursor: pointer;
-    font-size: 1.1rem;
-    padding: 4px;
-    border-radius: 4px;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-}
-.toggle-subgoals:hover {
-    opacity: 1;
-    background: rgba(76, 175, 80, 0.1);
-}
-
-/* Subgoals container */
-.subgoals {
-    margin-top: 12px;
-    padding-left: 36px;
-}
-.subgoal-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 8px;
-    padding: 8px 12px;
-    background: #fff;
-    border-radius: 6px;
-    border-left: 2px solid #81c784;
-}
-.subgoal-item.completed {
-    background: #f1f8e9;
-}
-
-.subgoal-checkbox {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-}
-
-.subgoal-text {
-    flex: 1;
-    font-size: 1rem;
-    color: #444;
-}
-.subgoal-item.completed .subgoal-text {
-    text-decoration: line-through;
-    color: #777;
-}
-
-/* Add Subgoal Button (Admin) */
-.add-subgoal-btn {
-    margin-top: 10px;
-    background: rgba(46, 125, 50, 0.1);
-    color: #2e7d32;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
     font-size: 0.9rem;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: all 0.2s;
 }
-.add-subgoal-btn:hover {
-    background: rgba(46, 125, 50, 0.2);
+.goal-item:hover .goal-action-btn {
+    opacity: 0.7;
+}
+.goal-action-btn:hover {
+    opacity: 1 !important;
+    background: rgba(0,0,0,0.05);
+    color: #2e7d32;
 }
 
-/* Subgoal Input (hidden by default) */
-.subgoal-input-form {
-    display: none;
-    margin-top: 8px;
-    padding-left: 36px;
-}
-.subgoal-input-form.visible {
+.edit-btn:hover { color: #1976d2 !important; }
+.delete-btn:hover { color: #d32f2f !important; }
+
+/* Subgoal Controls */
+.subgoal-controls {
     display: flex;
-    gap: 8px;
-    align-items: center;
+    gap: 6px;
+    margin-left: auto;
 }
-.subgoal-input {
+.subgoal-action-btn {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 2px 4px;
+    border-radius: 3px;
+    opacity: 0;
+}
+.subgoal-item:hover .subgoal-action-btn {
+    opacity: 0.6;
+}
+.subgoal-action-btn:hover {
+    opacity: 1;
+    background: rgba(0,0,0,0.08);
+}
+
+/* Edit Form (inline) */
+.edit-form {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 6px;
+}
+.edit-input {
     flex: 1;
     padding: 6px 10px;
     border: 1px solid #a5d6a7;
     border-radius: 4px;
     font-size: 0.95rem;
 }
-.subgoal-input-btns button {
-    padding: 6px 10px;
-    font-size: 0.9rem;
+.edit-btns button {
+    padding: 5px 10px;
+    font-size: 0.85rem;
+}
+
+/* Toast Notification (Undo Delete) */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2e7d32;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.toast.show {
+    opacity: 1;
+}
+.toast button {
+    background: rgba(255,255,255,0.3);
+    border: none;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Drag & Drop Styling */
+.subgoal-item.dragging {
+    opacity: 0.5;
+    transform: scale(0.98);
+}
+.subgoal-item.over {
+    border-color: #4caf50;
+    background: #f1f8e9;
 }
