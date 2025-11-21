@@ -50,6 +50,43 @@
             </p>
         </section>
 
+        <!-- Goal Progress Section -->
+<section id="goals" class="section fade-in-section">
+    <h2>My Goals & Progress</h2>
+
+    <!-- Progress Track -->
+    <div class="progress-track">
+        <div class="progress-labels">
+            <span class="label start">Start</span>
+            <span class="label end">Complete</span>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-fill" id="progressFill"></div>
+            <div class="progress-glow"></div>
+        </div>
+
+        <div class="progress-info">
+            <span id="phaseText">Getting started...</span>
+            <span id="percentText">0%</span>
+        </div>
+    </div>
+
+    <!-- Goal Management -->
+    <div class="goal-controls">
+        <h3>Add a New Goal</h3>
+        <form id="addGoalForm">
+            <input type="text" id="goalInput" placeholder="e.g., Complete Algorithms module" required>
+            <button type="submit">➕ Add Goal</button>
+        </form>
+    </div>
+
+    <!-- Goal List -->
+    <div class="goal-list" id="goalList">
+        <!-- Goals will be inserted here dynamically -->
+    </div>
+</section>
+
         <!-- Education Section -->
 <section id="education" class="section fade-in-section">
     <h2>Education</h2>
