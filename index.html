@@ -72,12 +72,29 @@
         </div>
     </div>
 
-    <!-- Goal Management -->
+    <!-- Goal Management (Admin-only) -->
     <div class="goal-controls">
         <h3>Add a New Goal</h3>
-        <form id="addGoalForm">
+        <p class="admin-note">🔒 Admin access required</p>
+
+        <button id="unlockButton" class="btn-admin">🔑 Unlock Goal Editor</button>
+
+        <!-- Password Form -->
+        <form id="passwordForm" class="password-form hidden">
+            <input type="password" id="passwordInput" placeholder="Enter admin password" autocomplete="off">
+            <button type="submit">🔓 Verify</button>
+            <button type="button" id="cancelUnlock">Cancel</button>
+        </form>
+
+        <!-- Goal Input Form -->
+        <form id="addGoalForm" class="add-goal-form hidden">
             <input type="text" id="goalInput" placeholder="e.g., Complete Algorithms module" required>
+            <div class="form-options">
+                <label><input type="checkbox" id="isMainGoal" checked> Main Goal</label>
+                <label><input type="checkbox" id="allowSubgoals"> Allow Subgoals</label>
+            </div>
             <button type="submit">➕ Add Goal</button>
+            <button type="button" id="lockButton">🔒 Lock Editor</button>
         </form>
     </div>
 
