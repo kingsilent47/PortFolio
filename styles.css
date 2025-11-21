@@ -1,4 +1,12 @@
 /* Basic Reset */
+/* 🔑 Critical: Ensure hidden works */
+.hidden {
+    display: none !important;
+}
+
+/* 🔧 Debug: Make admin panel visible temporarily */
+/* .admin-panel { display: block !important; background: #fff59d; } */
+
 * {
     margin: 0;
     padding: 0;
