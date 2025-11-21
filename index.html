@@ -54,47 +54,63 @@
 <section id="goals" class="section fade-in-section">
     <h2>My Goals & Progress</h2>
 
-    <!-- Progress Track -->
-    <div class="progress-track">
-        <div class="progress-labels">
-            <span class="label start">Start</span>
-            <span class="label end">Complete</span>
+    <!-- Progress Header Card -->
+    <div class="progress-header-card">
+        <div class="progress-stats">
+            <div class="stat">
+                <span class="stat-label">Tasks Completed</span>
+                <span class="stat-value" id="completedTasks">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Total Tasks</span>
+                <span class="stat-value" id="totalTasks">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Progress</span>
+                <span class="stat-value" id="progressPercent">0%</span>
+            </div>
         </div>
-
-        <div class="progress-container">
-            <div class="progress-fill" id="progressFill"></div>
-            <div class="progress-glow"></div>
-        </div>
-
-        <div class="progress-info">
-            <span id="phaseText">Getting started...</span>
-            <span id="percentText">0%</span>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar"></div>
         </div>
     </div>
 
-    <!-- Goal Management (Admin-only) -->
-    <div class="goal-controls">
-        <h3>Add a New Goal</h3>
-        <p class="admin-note">🔒 Admin access required</p>
-
-        <button id="unlockButton" class="btn-admin">🔑 Unlock Goal Editor</button>
+    <!-- Admin Panel (Hidden by default) -->
+    <div class="admin-panel hidden" id="adminPanel">
+        <div class="admin-header">
+            <h3><i class="fas fa-lock"></i> Admin Access Required</h3>
+            <button id="unlockButton" class="btn-admin"><i class="fas fa-key"></i> Unlock Editor</button>
+        </div>
 
         <!-- Password Form -->
         <form id="passwordForm" class="password-form hidden">
             <input type="password" id="passwordInput" placeholder="Enter admin password" autocomplete="off">
-            <button type="submit">🔓 Verify</button>
-            <button type="button" id="cancelUnlock">Cancel</button>
+            <div class="password-actions">
+                <button type="submit"><i class="fas fa-check"></i> Verify</button>
+                <button type="button" id="cancelUnlock"><i class="fas fa-times"></i> Cancel</button>
+            </div>
         </form>
 
-        <!-- Goal Input Form -->
+        <!-- Add Goal Form -->
         <form id="addGoalForm" class="add-goal-form hidden">
-            <input type="text" id="goalInput" placeholder="e.g., Complete Algorithms module" required>
-            <div class="form-options">
-                <label><input type="checkbox" id="isMainGoal" checked> Main Goal</label>
-                <label><input type="checkbox" id="allowSubgoals"> Allow Subgoals</label>
+            <div class="form-group">
+                <label for="goalInput"><i class="fas fa-tasks"></i> Goal Title</label>
+                <input type="text" id="goalInput" placeholder="e.g., Complete Algorithms module" required>
             </div>
-            <button type="submit">➕ Add Goal</button>
-            <button type="button" id="lockButton">🔒 Lock Editor</button>
+            <div class="form-options">
+                <div class="option">
+                    <input type="checkbox" id="isMainGoal" checked>
+                    <label for="isMainGoal">Main Goal</label>
+                </div>
+                <div class="option">
+                    <input type="checkbox" id="allowSubgoals">
+                    <label for="allowSubgoals">Allow Subgoals</label>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit"><i class="fas fa-plus"></i> Add Goal</button>
+                <button type="button" id="lockButton"><i class="fas fa-lock"></i> Lock Editor</button>
+            </div>
         </form>
     </div>
 
