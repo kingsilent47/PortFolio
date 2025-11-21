@@ -150,15 +150,20 @@ window.addEventListener('scroll', function() {
     }
 
     function updateProgress() {
-        const { percent, completed, total } = calculateProgress();
+    const { percent, completed, total } = calculateProgress();
 
-        document.getElementById('progressBar')?.style.width = `${percent}%`;
-        document.getElementById('completedTasks')?.textContent = completed;
-        document.getElementById('totalTasks')?.textContent = total;
-        document.getElementById('progressPercent')?.textContent = `${percent}%`;
-
-        renderGoals();
+    const progressBar = document.getElementById('progressBar');
+    if (progressBar) {
+        progressBar.style.width = `${percent}%`;
     }
+
+    document.getElementById('completedTasks')?.textContent = completed;
+    document.getElementById('totalTasks')?.textContent = total;
+    document.getElementById('progressPercent')?.textContent = `${percent}%`;
+
+    renderGoals();
+}
+
 
     // UI Helpers
     window.toggleSubgoals = (goalId) => {
