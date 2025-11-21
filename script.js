@@ -75,15 +75,27 @@ window.addEventListener('scroll', function() {
     }
 });
 
-// ========== GOAL TRACKER ==========
+// ========== SECURE GOAL TRACKER (Admin Password Protected) ==========
 (() => {
+    // 🔐 CONFIG: Set your hashed password here (DO NOT PUT PLAIN TEXT!)
+    // Generate your hash at: https://emn178.github.io/online-tools/sha256.html
+    // Example: "mypassword" → "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f"
+    const HASHED_PASSWORD = "Youngking@2002"; // ← REPLACE THIS!
+
     // DOM Elements
     const progressFill = document.getElementById('progressFill');
     const phaseText = document.getElementById('phaseText');
     const percentText = document.getElementById('percentText');
     const goalList = document.getElementById('goalList');
+    const unlockButton = document.getElementById('unlockButton');
+    const passwordForm = document.getElementById('passwordForm');
+    const passwordInput = document.getElementById('passwordInput');
     const addGoalForm = document.getElementById('addGoalForm');
     const goalInput = document.getElementById('goalInput');
+    const cancelUnlock = document.getElementById('cancelUnlock');
+    const lockButton = document.getElementById('lockButton');
+
+    if (!unlockButton) return; // Exit if section not present
 
     // Load goals from localStorage or use defaults
     let goals = JSON.parse(localStorage.getItem('motakeGoals')) || [
@@ -93,23 +105,29 @@ window.addEventListener('scroll', function() {
         { id: Date.now() + 3, text: "Land internship", completed: false }
     ];
 
-    // Save goals to localStorage
+    // SHA-256 hashing (pure JS, no external lib)
+    async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Save goals
     function saveGoals() {
         localStorage.setItem('motakeGoals', JSON.stringify(goals));
         updateProgress();
     }
 
-    // Calculate & update progress
+    // Update progress bar & phase text
     function updateProgress() {
         const total = goals.length;
         const completed = goals.filter(g => g.completed).length;
         const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
 
-        // Animate fill
         progressFill.style.width = `${percent}%`;
         percentText.textContent = `${percent}%`;
 
-        // Update phase text
         if (completed === 0) {
             phaseText.textContent = "Just getting started!";
         } else if (completed === total) {
@@ -121,41 +139,102 @@ window.addEventListener('scroll', function() {
         renderGoals();
     }
 
-    // Render goal list
+    // Render goals (read-only for visitors)
     function renderGoals() {
         goalList.innerHTML = '';
         goals.forEach(goal => {
             const item = document.createElement('div');
             item.className = `goal-item ${goal.completed ? 'completed' : ''}`;
             item.innerHTML = `
-                <input type="checkbox" class="goal-checkbox" data-id="${goal.id}" ${goal.completed ? 'checked' : ''}>
+                <input type="checkbox" class="goal-checkbox" data-id="${goal.id}" ${goal.completed ? 'checked' : ''} ${isUnlocked ? '' : 'disabled'}>
                 <span class="goal-text">${goal.text}</span>
             `;
             goalList.appendChild(item);
 
-            // Add event listener
-            const checkbox = item.querySelector('.goal-checkbox');
-            checkbox.addEventListener('change', () => {
-                const goalToUpdate = goals.find(g => g.id == goal.id);
-                if (goalToUpdate) {
-                    goalToUpdate.completed = checkbox.checked;
-                    saveGoals();
-                }
-            });
+            if (isUnlocked) {
+                const checkbox = item.querySelector('.goal-checkbox');
+                checkbox.addEventListener('change', () => {
+                    const goalToUpdate = goals.find(g => g.id == goal.id);
+                    if (goalToUpdate) {
+                        goalToUpdate.completed = checkbox.checked;
+                        saveGoals();
+                    }
+                });
+            }
         });
     }
 
-    // Add new goal
-    addGoalForm?.addEventListener('submit', (e) => {
+    // 🔐 Admin State
+    let isUnlocked = false;
+
+    // Show/hide forms
+    function showPasswordForm() {
+        passwordForm.classList.remove('hidden');
+        unlockButton.style.display = 'none';
+    }
+
+    function showGoalForm() {
+        isUnlocked = true;
+        passwordForm.classList.add('hidden');
+        addGoalForm.classList.remove('hidden');
+        renderGoals(); // Re-render with interactive checkboxes
+    }
+
+    function lockEditor() {
+        isUnlocked = false;
+        addGoalForm.classList.add('hidden');
+        unlockButton.style.display = 'inline-block';
+        renderGoals(); // Re-render with disabled checkboxes
+    }
+
+    // Events
+    unlockButton.addEventListener('click', showPasswordForm);
+    cancelUnlock.addEventListener('click', () => {
+        passwordForm.classList.add('hidden');
+        unlockButton.style.display = 'inline-block';
+        passwordInput.value = '';
+        document.querySelectorAll('.password-error').forEach(el => el.remove());
+    });
+
+    lockButton.addEventListener('click', lockEditor);
+
+    passwordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = passwordInput.value.trim();
+        if (!input) return;
+
+        try {
+            const hash = await sha256(input);
+            if (hash === HASHED_PASSWORD) {
+                showGoalForm();
+                passwordInput.value = '';
+                document.querySelectorAll('.password-error').forEach(el => el.remove());
+            } else {
+                // Show error
+                let error = document.querySelector('.password-error');
+                if (!error) {
+                    error = document.createElement('p');
+                    error.className = 'password-error';
+                    passwordForm.appendChild(error);
+                }
+                error.textContent = "❌ Incorrect password. Try again.";
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        } catch (err) {
+            console.error("Hashing failed:", err);
+        }
+    });
+
+    addGoalForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const text = goalInput.value.trim();
         if (text) {
-            const newGoal = {
+            goals.push({
                 id: Date.now(),
                 text: text,
                 completed: false
-            };
-            goals.push(newGoal);
+            });
             saveGoals();
             goalInput.value = '';
             goalInput.focus();
