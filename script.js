@@ -74,3 +74,94 @@ window.addEventListener('scroll', function() {
         header.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
     }
 });
+
+// ========== GOAL TRACKER ==========
+(() => {
+    // DOM Elements
+    const progressFill = document.getElementById('progressFill');
+    const phaseText = document.getElementById('phaseText');
+    const percentText = document.getElementById('percentText');
+    const goalList = document.getElementById('goalList');
+    const addGoalForm = document.getElementById('addGoalForm');
+    const goalInput = document.getElementById('goalInput');
+
+    // Load goals from localStorage or use defaults
+    let goals = JSON.parse(localStorage.getItem('motakeGoals')) || [
+        { id: Date.now(), text: "Complete BSc in IT", completed: false },
+        { id: Date.now() + 1, text: "Build portfolio website", completed: true },
+        { id: Date.now() + 2, text: "Learn React.js", completed: false },
+        { id: Date.now() + 3, text: "Land internship", completed: false }
+    ];
+
+    // Save goals to localStorage
+    function saveGoals() {
+        localStorage.setItem('motakeGoals', JSON.stringify(goals));
+        updateProgress();
+    }
+
+    // Calculate & update progress
+    function updateProgress() {
+        const total = goals.length;
+        const completed = goals.filter(g => g.completed).length;
+        const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+        // Animate fill
+        progressFill.style.width = `${percent}%`;
+        percentText.textContent = `${percent}%`;
+
+        // Update phase text
+        if (completed === 0) {
+            phaseText.textContent = "Just getting started!";
+        } else if (completed === total) {
+            phaseText.textContent = "🎉 All goals achieved!";
+        } else {
+            phaseText.textContent = `${completed} of ${total} goals completed`;
+        }
+
+        renderGoals();
+    }
+
+    // Render goal list
+    function renderGoals() {
+        goalList.innerHTML = '';
+        goals.forEach(goal => {
+            const item = document.createElement('div');
+            item.className = `goal-item ${goal.completed ? 'completed' : ''}`;
+            item.innerHTML = `
+                <input type="checkbox" class="goal-checkbox" data-id="${goal.id}" ${goal.completed ? 'checked' : ''}>
+                <span class="goal-text">${goal.text}</span>
+            `;
+            goalList.appendChild(item);
+
+            // Add event listener
+            const checkbox = item.querySelector('.goal-checkbox');
+            checkbox.addEventListener('change', () => {
+                const goalToUpdate = goals.find(g => g.id == goal.id);
+                if (goalToUpdate) {
+                    goalToUpdate.completed = checkbox.checked;
+                    saveGoals();
+                }
+            });
+        });
+    }
+
+    // Add new goal
+    addGoalForm?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const text = goalInput.value.trim();
+        if (text) {
+            const newGoal = {
+                id: Date.now(),
+                text: text,
+                completed: false
+            };
+            goals.push(newGoal);
+            saveGoals();
+            goalInput.value = '';
+            goalInput.focus();
+        }
+    });
+
+    // Initialize
+    updateProgress();
+})();
