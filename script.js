@@ -78,7 +78,7 @@ window.addEventListener('scroll', function() {
 // ========== SECURE GOAL TRACKER WITH SUBGOALS ==========
 (() => {
     // 🔐 CONFIG: Replace with YOUR SHA-256 hash (https://emn178.github.io/online-tools/sha256.html)
-    const HASHED_PASSWORD = "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f"; // ← CHANGE ME!
+    const HASHED_PASSWORD = "47Youngking@2002"; // ← CHANGE ME!
 
     // DOM
     const progressFill = document.getElementById('progressFill');
