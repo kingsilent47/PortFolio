@@ -75,14 +75,12 @@ window.addEventListener('scroll', function() {
     }
 });
 
-// ========== SECURE GOAL TRACKER (Admin Password Protected) ==========
+// ========== SECURE GOAL TRACKER WITH SUBGOALS ==========
 (() => {
-    // 🔐 CONFIG: Set your hashed password here (DO NOT PUT PLAIN TEXT!)
-    // Generate your hash at: https://emn178.github.io/online-tools/sha256.html
-    // Example: "mypassword" → "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f"
-    const HASHED_PASSWORD = "Youngking@2002"; // ← REPLACE THIS!
+    // 🔐 CONFIG: Replace with YOUR SHA-256 hash (https://emn178.github.io/online-tools/sha256.html)
+    const HASHED_PASSWORD = "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f"; // ← CHANGE ME!
 
-    // DOM Elements
+    // DOM
     const progressFill = document.getElementById('progressFill');
     const phaseText = document.getElementById('phaseText');
     const percentText = document.getElementById('percentText');
@@ -92,20 +90,48 @@ window.addEventListener('scroll', function() {
     const passwordInput = document.getElementById('passwordInput');
     const addGoalForm = document.getElementById('addGoalForm');
     const goalInput = document.getElementById('goalInput');
+    const isMainGoalCheck = document.getElementById('isMainGoal');
+    const allowSubgoalsCheck = document.getElementById('allowSubgoals');
     const cancelUnlock = document.getElementById('cancelUnlock');
     const lockButton = document.getElementById('lockButton');
 
-    if (!unlockButton) return; // Exit if section not present
+    if (!unlockButton) return;
 
-    // Load goals from localStorage or use defaults
+    // Load goals
     let goals = JSON.parse(localStorage.getItem('motakeGoals')) || [
-        { id: Date.now(), text: "Complete BSc in IT", completed: false },
-        { id: Date.now() + 1, text: "Build portfolio website", completed: true },
-        { id: Date.now() + 2, text: "Learn React.js", completed: false },
-        { id: Date.now() + 3, text: "Land internship", completed: false }
+        {
+            id: 'g1',
+            text: "Complete BSc in IT",
+            completed: false,
+            isMain: true,
+            allowSubgoals: true,
+            subgoals: [
+                { id: 'sg1', text: "Pass Algorithms module", completed: true },
+                { id: 'sg2', text: "Pass Databases module", completed: false },
+                { id: 'sg3', text: "Submit final project", completed: false }
+            ]
+        },
+        {
+            id: 'g2',
+            text: "Build professional portfolio",
+            completed: true,
+            isMain: true,
+            allowSubgoals: false,
+            subgoals: []
+        },
+        {
+            id: 'g3',
+            text: "Learn React.js",
+            completed: false,
+            isMain: false,
+            allowSubgoals: false,
+            subgoals: []
+        }
     ];
 
-    // SHA-256 hashing (pure JS, no external lib)
+    let isUnlocked = false;
+
+    // SHA-256
     async function sha256(message) {
         const msgBuffer = new TextEncoder().encode(message);
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -113,17 +139,38 @@ window.addEventListener('scroll', function() {
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // Save goals
+    // Save
     function saveGoals() {
         localStorage.setItem('motakeGoals', JSON.stringify(goals));
         updateProgress();
     }
 
-    // Update progress bar & phase text
+    // Calculate total progress (main + subgoals weighted equally)
+    function calculateProgress() {
+        let totalTasks = 0;
+        let completedTasks = 0;
+
+        goals.forEach(goal => {
+            // Each main goal counts as 1 task
+            totalTasks += 1;
+            if (goal.completed) completedTasks += 1;
+
+            // Each subgoal also counts as 1 task
+            goal.subgoals.forEach(sub => {
+                totalTasks += 1;
+                if (sub.completed) completedTasks += 1;
+            });
+        });
+
+        return {
+            percent: totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100),
+            completed: completedTasks,
+            total: totalTasks
+        };
+    }
+
     function updateProgress() {
-        const total = goals.length;
-        const completed = goals.filter(g => g.completed).length;
-        const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+        const { percent, completed, total } = calculateProgress();
 
         progressFill.style.width = `${percent}%`;
         percentText.textContent = `${percent}%`;
@@ -131,43 +178,127 @@ window.addEventListener('scroll', function() {
         if (completed === 0) {
             phaseText.textContent = "Just getting started!";
         } else if (completed === total) {
-            phaseText.textContent = "🎉 All goals achieved!";
+            phaseText.textContent = "🎉 All goals & subgoals achieved!";
         } else {
-            phaseText.textContent = `${completed} of ${total} goals completed`;
+            phaseText.textContent = `${completed} of ${total} tasks done`;
         }
 
         renderGoals();
     }
 
-    // Render goals (read-only for visitors)
+    // Toggle subgoal visibility
+    function toggleSubgoals(goalId) {
+        const container = document.querySelector(`#subgoals-${goalId}`);
+        if (container) {
+            container.style.display = container.style.display === 'none' ? 'block' : 'none';
+            const btn = document.querySelector(`[data-goal-id="${goalId}"] .toggle-subgoals`);
+            if (btn) btn.textContent = container.style.display === 'none' ? '➕' : '➖';
+        }
+    }
+
+    // Render goals
     function renderGoals() {
         goalList.innerHTML = '';
-        goals.forEach(goal => {
-            const item = document.createElement('div');
-            item.className = `goal-item ${goal.completed ? 'completed' : ''}`;
-            item.innerHTML = `
-                <input type="checkbox" class="goal-checkbox" data-id="${goal.id}" ${goal.completed ? 'checked' : ''} ${isUnlocked ? '' : 'disabled'}>
-                <span class="goal-text">${goal.text}</span>
-            `;
-            goalList.appendChild(item);
 
+        goals.forEach(goal => {
+            const isMain = goal.isMain || false;
+            const hasSubgoals = goal.subgoals && goal.subgoals.length > 0;
+
+            const goalEl = document.createElement('div');
+            goalEl.className = `goal-item ${isMain ? 'main' : ''} ${goal.completed ? 'completed' : ''}`;
+            goalEl.innerHTML = `
+                <div class="goal-header">
+                    <input type="checkbox" class="goal-checkbox" data-id="${goal.id}" ${goal.completed ? 'checked' : ''} ${isUnlocked ? '' : 'disabled'}>
+                    <span class="goal-text">${goal.text}</span>
+                    ${isMain && goal.allowSubgoals && hasSubgoals ? 
+                        `<button class="toggle-subgoals" onclick="toggleSubgoals('${goal.id}')">➖</button>` : ''}
+                </div>
+                ${isMain && goal.allowSubgoals ? `
+                    <div id="subgoals-${goal.id}" class="subgoals" style="display: block;">
+                        ${goal.subgoals.map(sub => `
+                            <div class="subgoal-item ${sub.completed ? 'completed' : ''}">
+                                <input type="checkbox" class="subgoal-checkbox" data-parent="${goal.id}" data-id="${sub.id}" ${sub.completed ? 'checked' : ''} ${isUnlocked ? '' : 'disabled'}>
+                                <span class="subgoal-text">${sub.text}</span>
+                            </div>
+                        `).join('')}
+                        ${isUnlocked ? `
+                            <button class="add-subgoal-btn" onclick="showSubgoalInput('${goal.id}')">
+                                <i class="fas fa-plus"></i> Add Subgoal
+                            </button>
+                            <div id="subgoal-input-${goal.id}" class="subgoal-input-form">
+                                <input type="text" class="subgoal-input" placeholder="e.g., Read chapter 3">
+                                <div class="subgoal-input-btns">
+                                    <button type="button" onclick="addSubgoal('${goal.id}')">Add</button>
+                                    <button type="button" onclick="hideSubgoalInput('${goal.id}')">Cancel</button>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
+            `;
+
+            goalList.appendChild(goalEl);
+
+            // Attach event listeners (if unlocked)
             if (isUnlocked) {
-                const checkbox = item.querySelector('.goal-checkbox');
-                checkbox.addEventListener('change', () => {
-                    const goalToUpdate = goals.find(g => g.id == goal.id);
-                    if (goalToUpdate) {
-                        goalToUpdate.completed = checkbox.checked;
+                const mainCheckbox = goalEl.querySelector('.goal-checkbox');
+                mainCheckbox?.addEventListener('change', (e) => {
+                    const g = goals.find(g => g.id == e.target.dataset.id);
+                    if (g) {
+                        g.completed = e.target.checked;
                         saveGoals();
                     }
+                });
+
+                goalEl.querySelectorAll('.subgoal-checkbox').forEach(cb => {
+                    cb.addEventListener('change', (e) => {
+                        const parentId = e.target.dataset.parent;
+                        const subId = e.target.dataset.id;
+                        const g = goals.find(g => g.id == parentId);
+                        if (g) {
+                            const sub = g.subgoals.find(s => s.id == subId);
+                            if (sub) {
+                                sub.completed = e.target.checked;
+                                saveGoals();
+                            }
+                        }
+                    });
                 });
             }
         });
     }
 
-    // 🔐 Admin State
-    let isUnlocked = false;
+    // Subgoal UI helpers (exposed globally for onclick)
+    window.toggleSubgoals = toggleSubgoals;
+    window.showSubgoalInput = (goalId) => {
+        document.getElementById(`subgoal-input-${goalId}`)?.classList.add('visible');
+    };
+    window.hideSubgoalInput = (goalId) => {
+        const el = document.getElementById(`subgoal-input-${goalId}`);
+        if (el) {
+            el.classList.remove('visible');
+            el.querySelector('.subgoal-input').value = '';
+        }
+    };
+    window.addSubgoal = (goalId) => {
+        const input = document.querySelector(`#subgoal-input-${goalId} .subgoal-input`);
+        const text = input.value.trim();
+        if (text) {
+            const goal = goals.find(g => g.id == goalId);
+            if (goal) {
+                goal.subgoals.push({
+                    id: `sg_${Date.now()}`,
+                    text: text,
+                    completed: false
+                });
+                saveGoals();
+                input.value = '';
+                hideSubgoalInput(goalId);
+            }
+        }
+    };
 
-    // Show/hide forms
+    // 🔐 Unlock/Lock
     function showPasswordForm() {
         passwordForm.classList.remove('hidden');
         unlockButton.style.display = 'none';
@@ -177,14 +308,14 @@ window.addEventListener('scroll', function() {
         isUnlocked = true;
         passwordForm.classList.add('hidden');
         addGoalForm.classList.remove('hidden');
-        renderGoals(); // Re-render with interactive checkboxes
+        renderGoals();
     }
 
     function lockEditor() {
         isUnlocked = false;
         addGoalForm.classList.add('hidden');
         unlockButton.style.display = 'inline-block';
-        renderGoals(); // Re-render with disabled checkboxes
+        renderGoals();
     }
 
     // Events
@@ -210,7 +341,6 @@ window.addEventListener('scroll', function() {
                 passwordInput.value = '';
                 document.querySelectorAll('.password-error').forEach(el => el.remove());
             } else {
-                // Show error
                 let error = document.querySelector('.password-error');
                 if (!error) {
                     error = document.createElement('p');
@@ -229,11 +359,17 @@ window.addEventListener('scroll', function() {
     addGoalForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const text = goalInput.value.trim();
+        const isMain = isMainGoalCheck.checked;
+        const allowSub = allowSubgoalsCheck.checked && isMain;
+
         if (text) {
             goals.push({
-                id: Date.now(),
+                id: `g_${Date.now()}`,
                 text: text,
-                completed: false
+                completed: false,
+                isMain: isMain,
+                allowSubgoals: allowSub,
+                subgoals: []
             });
             saveGoals();
             goalInput.value = '';
