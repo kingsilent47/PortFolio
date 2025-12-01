@@ -505,6 +505,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ===== Handle goal/subgoal completion toggling =====
+if (goalList) {
+    goalList.addEventListener('change', function(e) {
+        if (e.target.classList.contains('goal-checkbox')) {
+            const goalId = e.target.dataset.id;
+            const goal = goals.find(g => g.id == goalId);
+            if (goal) {
+                goal.completed = e.target.checked;
+                saveGoals(); // Saves + updates UI + progress bar
+            }
+        } else if (e.target.classList.contains('subgoal-checkbox')) {
+            const goalId = e.target.dataset.parent;
+            const subId = e.target.dataset.id;
+            const goal = goals.find(g => g.id == goalId);
+            const subgoal = goal?.subgoals.find(s => s.id == subId);
+            if (subgoal) {
+                subgoal.completed = e.target.checked;
+                saveGoals(); // Saves + updates UI + progress bar
+            }
+        }
+    });
+}
+
     // Initialize
     updateProgress();
 });
